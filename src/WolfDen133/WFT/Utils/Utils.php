@@ -114,47 +114,6 @@ class Utils
         return preg_replace('/_+/', "_", $id);
     }
 
-    public static function setCommandPacketData (AvailableCommandsPacket $packet) : void
-    {
-        if (!isset($packet->commandData['wft'])) return;
-
-        $args = [
-            [
-                CommandParameter::enum('create', new CommandEnum('create', ['create']), CommandParameter::FLAG_FORCE_COLLAPSE_ENUM),
-                CommandParameter::standard('uniqueName', AvailableCommandsPacket::ARG_TYPE_STRING, 0, true),
-                CommandParameter::standard('text', AvailableCommandsPacket::ARG_TYPE_RAWTEXT, 0, true)
-            ],
-            [
-                CommandParameter::enum('remove', new CommandEnum('remove', ['remove']), CommandParameter::FLAG_FORCE_COLLAPSE_ENUM),
-                CommandParameter::enum('uniqueName', new CommandEnum('uniqueName', array_keys(WFT::getInstance()->getTextManager()->texts)), 0, true)
-            ],
-            [
-                CommandParameter::enum('edit', new CommandEnum('edit', ['edit']), CommandParameter::FLAG_FORCE_COLLAPSE_ENUM),
-                CommandParameter::enum('uniqueName', new CommandEnum('uniqueName', array_keys(WFT::getInstance()->getTextManager()->texts)), 0, true),
-                CommandParameter::standard('text', AvailableCommandsPacket::ARG_TYPE_RAWTEXT, 0, true)
-
-            ],
-            [
-                CommandParameter::enum('tp', new CommandEnum('tp', ['tp']), CommandParameter::FLAG_FORCE_COLLAPSE_ENUM),
-                CommandParameter::enum('uniqueName', new CommandEnum('uniqueName', array_keys(WFT::getInstance()->getTextManager()->texts)), 0, true)
-            ],
-            [
-                CommandParameter::enum('tphere', new CommandEnum('tphere', ['tphere']), CommandParameter::FLAG_FORCE_COLLAPSE_ENUM),
-                CommandParameter::enum('uniqueName', new CommandEnum('uniqueName', array_keys(WFT::getInstance()->getTextManager()->texts)), 0, true),
-            ],
-            [
-                CommandParameter::enum('list', new CommandEnum('list', ['list']), CommandParameter::FLAG_FORCE_COLLAPSE_ENUM),
-            ],
-            [
-                CommandParameter::enum('help', new CommandEnum('help', ['help']), CommandParameter::FLAG_FORCE_COLLAPSE_ENUM),
-            ]
-        ];
-
-        $packet->commandData['wft']->overloads = $args;
-
-        self::$packet = $packet;
-    }
-
     public static function sendCommandDataPacket () : void
     {
         foreach (WFT::getInstance()->getServer()->getOnlinePlayers() as $player) $player->getNetworkSession()->sendDataPacket(self::$packet);

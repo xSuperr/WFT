@@ -2,10 +2,9 @@
 
 namespace WolfDen133\WFT\Command;
 
-use pocketmine\command\Command;
+use CortexPE\Commando\args\RawStringArgument;
+use CortexPE\Commando\BaseCommand;
 
-use pocketmine\plugin\Plugin;
-use pocketmine\plugin\PluginOwned;
 
 use pocketmine\command\CommandSender;
 
@@ -13,24 +12,26 @@ use pocketmine\world\Position;
 
 use pocketmine\player\Player;
 
+use WolfDen133\WFT\API\TextManager;
 use WolfDen133\WFT\Form\Types\CreationForm;
 use WolfDen133\WFT\Form\Types\ListForm;
 use WolfDen133\WFT\WFT;
 
-class WFTCommand extends Command implements PluginOwned
+class WFTCommand extends BaseCommand
 {
 
-    public function __construct(string $name)
+    public function prepare(): void
     {
-        parent::__construct($name);
-
         $this->setPermission(WFT::getInstance()->getLanguageManager()->getLanguage()->getValue("command.permission"));
         $this->setDescription(WFT::getInstance()->getLanguageManager()->getLanguage()->getValue("command.description"));
         $this->setAliases(WFT::getInstance()->getLanguageManager()->getLanguage()->getValue("command.aliases"));
+        $this->registerArgument(0, new RawStringArgument('one', true));
+        $this->registerArgument(1, new RawStringArgument('two', true));
+        $this->registerArgument(2, new RawStringArgument('three', true));
         $this->setUsage("/wft help");
     }
 
-    public function execute(CommandSender $sender, string $commandLabel, array $args)
+    public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
     {
         if (!($sender instanceof Player)) {
             $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getValue("command.sender"));
@@ -45,7 +46,11 @@ class WFTCommand extends Command implements PluginOwned
         }
 
         if (count($args) == 1) {
-            switch ($args[0]) {
+            switch ($args['one']) {
+                case "reload":
+                    WFT::getInstance()->getTextManager()->reloadTexts();
+                    $sender->sendMessage("Reloaded texts");
+                    break;
                 case "list":
                 case "see":
                 case "all":
@@ -126,12 +131,12 @@ class WFTCommand extends Command implements PluginOwned
 
         if (count($args) == 2) {
 
-            if (($text = WFT::getInstance()->getTextManager()->getTextById($args[1])) === null) {
-                $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getMessage("not-found", ["{NAME}" => $args[1]]));
+            if (($text = WFT::getInstance()->getTextManager()->getTextById($args['two'])) === null) {
+                $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getMessage("not-found", ["{NAME}" => $args['two']]));
                 return;
             }
 
-            switch ($args[0]) {
+            switch ($args['one']) {
                 case "remove":
                 case "break":
                 case "delete":
@@ -175,7 +180,7 @@ class WFTCommand extends Command implements PluginOwned
         if (count($args) >= 3) {
             $api = WFT::getInstance()->getTextManager();
 
-            switch ($args[0]) {
+            switch ($args['one']) {
                 case "add":
                 case "create":
                 case "spawn":
@@ -184,12 +189,12 @@ class WFTCommand extends Command implements PluginOwned
                 case "c":
                 case "a":
 
-                    if (in_array($args[1], array_keys($api->getTexts()))) {
-                        $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getMessage("exists", ["{NAME}" => $args[1]]));
+                    if (in_array($args['two'], array_keys($api->getTexts()))) {
+                        $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getMessage("exists", ["{NAME}" => $args['two']]));
                         return;
                     }
 
-                    $floatingText = $api->registerText($args[1], implode(" ", array_splice($args, 2)), new Position($sender->getPosition()->getX(), $sender->getPosition()->getY() + 1.8, $sender->getPosition()->getZ(), $sender->getWorld()));
+                    $floatingText = $api->registerText($args['two'], implode(" ", array_splice($args, 2)), new Position($sender->getPosition()->getX(), $sender->getPosition()->getY() + 1.8, $sender->getPosition()->getZ(), $sender->getWorld()));
 
                     $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getMessage("add", ["{NAME}" => $floatingText->getName()]));
                     break;
@@ -197,15 +202,15 @@ class WFTCommand extends Command implements PluginOwned
                 case "e":
                 case "change":
 
-                    if (($text = WFT::getInstance()->getTextManager()->getTextById($args[1])) === null) {
-                        $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getMessage("not-found", ["{NAME}" => $args[1]]));
+                    if (($text = WFT::getInstance()->getTextManager()->getTextById($args['two'])) === null) {
+                        $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getMessage("not-found", ["{NAME}" => $args['two']]));
                         return;
                     }
 
                     $text->setText(implode(" ", array_splice($args, 2)));
                     $api->saveText($text);
                     $api->getActions()->respawnToAll($text->getName());
-                    $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getMessage("update", ["{NAME}" => $args[1]]));
+                    $sender->sendMessage(WFT::getInstance()->getLanguageManager()->getLanguage()->getMessage("update", ["{NAME}" => $args['two']]));
                     break;
                 default:
                     $sender->sendMessage($this->getUsage());
@@ -215,10 +220,5 @@ class WFTCommand extends Command implements PluginOwned
         }
 
         $sender->sendMessage($this->getUsage());
-    }
-
-    public function getOwningPlugin(): Plugin
-    {
-        return WFT::getInstance();
     }
 }

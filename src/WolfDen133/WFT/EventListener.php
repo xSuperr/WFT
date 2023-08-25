@@ -36,15 +36,6 @@ class EventListener implements Listener
         WFT::getInstance()->getTextManager()->spawnHandle($player, $event->getTo()->getWorld());
     }
 
-    public function onDataPacketSendEvent (DataPacketSendEvent $event) : void
-    {
-        foreach ($event->getPackets() as $packet) {
-            if (!($packet instanceof AvailableCommandsPacket)) continue;
-
-            Utils::setCommandPacketData($packet);
-        }
-    }
-
     public function onWorldLoadEvent (WorldLoadEvent $event) : void
     {
         WFT::getInstance()->getTextManager()->loadFloatingTexts();

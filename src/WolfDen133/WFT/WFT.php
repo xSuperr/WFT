@@ -38,17 +38,18 @@ class WFT extends PluginBase
 
         Utils::updateOldTexts();
 
-        $this->textManager = new TextManager();
-        $this->languageManager = new LanguageManager($this);
-        $this->formManager = new FormManager();
-
         new Time($this->getConfig()->get("timezone"), $this->getConfig()->get("date-format"), $this->getConfig()->get("time-format"));
     }
 
     public function onEnable() : void
     {
+        $this->textManager = new TextManager();
+
+        $this->languageManager = new LanguageManager($this);
+        $this->formManager = new FormManager();
+
         $this->getServer()->getPluginManager()->registerEvents(new EventListener(), $this);
-        $this->getServer()->getCommandMap()->register("WFT", new WFTCommand("wft"));
+        $this->getServer()->getCommandMap()->register("WFT", new WFTCommand($this, "wft"));
 
         $this->getScheduler()->scheduleRepeatingTask(new UpdateTask(), 1);
     }

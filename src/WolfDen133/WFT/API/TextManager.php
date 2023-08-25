@@ -58,6 +58,16 @@ class TextManager {
         }
     }
 
+    public function reloadTexts(): void
+    {
+        foreach ($this->texts as $id => $text) {
+            $this->getActions()->closeToAll($id);
+            unset($this->texts[$id]);
+        }
+
+        $this->loadFloatingTexts();
+    }
+
     /**
      * Simple function to load and check if a level is loaded
      * We do this because you cannot include an unloaded world in a spawn packet.
@@ -97,8 +107,6 @@ class TextManager {
         if ($saveText) $this->saveText($floatingText);
         if ($spawnToAll) $this->getActions()->spawnToAll($id);
 
-        Utils::sendCommandDataPacket();
-
         return $floatingText;
     }
 
@@ -134,8 +142,6 @@ class TextManager {
         $this->getActions()->closeToAll($id);
 
         unset($this->texts[$id]);
-
-        Utils::sendCommandDataPacket();
     }
 
 
