@@ -2,16 +2,21 @@
 
 namespace WolfDen133\WFT\Texts;
 
+use pocketmine\block\VanillaBlocks;
 use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\protocol\AddActorPacket;
 use pocketmine\network\mcpe\protocol\RemoveActorPacket;;
 use pocketmine\network\mcpe\protocol\SetActorDataPacket;
 use pocketmine\network\mcpe\protocol\types\AbilitiesData;
 use pocketmine\network\mcpe\protocol\types\AbilitiesLayer;
 use pocketmine\network\mcpe\protocol\types\command\CommandPermissions;
 use pocketmine\network\mcpe\protocol\types\DeviceOS;
+use pocketmine\network\mcpe\protocol\types\entity\ByteMetadataProperty;
+use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
 use pocketmine\network\mcpe\protocol\types\entity\FloatMetadataProperty;
+use pocketmine\network\mcpe\protocol\types\entity\IntMetadataProperty;
 use pocketmine\network\mcpe\protocol\types\entity\LongMetadataProperty;
 use pocketmine\network\mcpe\protocol\types\entity\PropertySyncData;
 use pocketmine\network\mcpe\protocol\types\entity\StringMetadataProperty;
@@ -63,52 +68,35 @@ class SubText
 
     public function spawnTo (Player $player) : void
     {
-        /** @var DataPacket $pks */
-        $pks = [];
+        $actorFlags = (
+            1 << EntityMetadataFlags::NO_AI
+        );
 
-        $pks[] = PlayerListPacket::add([PlayerListEntry::createAdditionEntry(
-            UUID::fromString($this->uuid),
-            $this->runtime,
-            "",
-            (new TypeConverter())->getSkinAdapter()->toSkinData(new Skin(
-                "Standard_Custom",
-                str_repeat("\x00", 8192)
-            ))
-        )]);
-
-        $pks[] = AddPlayerPacket::create(
-            UUID::fromString($this->uuid),
-            $this->text,
+        $pk = AddActorPacket::create(
             $this->runtime,
             $this->runtime,
+            EntityIds::FALLING_BLOCK,
             $this->position->asVector3(),
             null,
             0,
             0,
             0,
-            ItemStackWrapper::legacy(ItemStack::null()),
-            1,
+            0,
+            [],
             [
-                EntityMetadataProperties::FLAGS => new LongMetadataProperty(1 << EntityMetadataFlags::IMMOBILE),
-                EntityMetadataProperties::SCALE => new FloatMetadataProperty(0)
+                EntityMetadataProperties::FLAGS => new LongMetadataProperty($actorFlags),
+                EntityMetadataProperties::SCALE => new FloatMetadataProperty(0.1),
+                EntityMetadataProperties::BOUNDING_BOX_WIDTH => new FloatMetadataProperty(0.0),
+                EntityMetadataProperties::BOUNDING_BOX_HEIGHT => new FloatMetadataProperty(0.0),
+                EntityMetadataProperties::NAMETAG => new StringMetadataProperty(Utils::getFormattedText($this->text, $player)),
+                EntityMetadataProperties::VARIANT => new IntMetadataProperty(TypeConverter::getInstance()->getBlockTranslator()->internalIdToNetworkId(VanillaBlocks::AIR()->getStateId())),
+                EntityMetadataProperties::ALWAYS_SHOW_NAMETAG => new ByteMetadataProperty(1),
             ],
             new PropertySyncData([], []),
-            UpdateAbilitiesPacket::create(new AbilitiesData(CommandPermissions::NORMAL, PlayerPermissions::CUSTOM, $this->runtime, [
-                new AbilitiesLayer(
-                    AbilitiesLayer::LAYER_BASE,
-                    array_fill(0, AbilitiesLayer::NUMBER_OF_ABILITIES, false),
-                    0.0,
-                    0.0
-                )
-            ])),
-            [],
-            "",
-            DeviceOS::UNKNOWN
+            []
         );
 
-        $pks[] = PlayerListPacket::remove([PlayerListEntry::createRemovalEntry(UUID::fromString($this->uuid))]);
-
-        foreach ($pks as $pk) $player->getNetworkSession()->sendDataPacket($pk);
+        $player->getNetworkSession()->sendDataPacket($pk);
 
     }
 
